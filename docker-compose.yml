@@ -1,0 +1,48 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # Servizio Database MySQL
+  db:
+    image: mysql:8.0
+    container_name: smart_laundry_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: tuapassword
+      MYSQL_DATABASE: smart_laundry
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 5
+
+  # Servizio Applicazione Node.js
+  app:
+    build: .
+    container_name: smart_laundry_app
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - PORT=80
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=tuapassword
+      - DB_NAME=smart_laundry
+      - JWT_SECRET=supersecretkey_cambiami
+      - TELEGRAM_BOT_TOKEN=il_tuo_telegram_bot_token
+      - TELEGRAM_CHAT_ID=id_canale_o_utente
+      - EMAIL_HOST=://esempio.com
+      - EMAIL_PORT=587
+      - EMAIL_USER=produzione@esempio.com
+      - EMAIL_PASS=password_email
+      - EMAIL_TO=manager@esempio.com
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

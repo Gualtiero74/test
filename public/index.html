@@ -1,0 +1,127 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Pannello Smart Laundry</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f9; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #007BFF; color: white; }
+        button { padding: 10px 15px; background: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>Dashboard Controllo Produzione</h1>
+
+    <!-- Form Login -->
+    <div id="login-section" class="card">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Accedi</button>
+    </div>
+
+    <!-- Contenuto Principale (Visibile post-login) -->
+    <div id="main-section" class="hidden">
+        <div class="card">
+            <h3>Profilo: <span id="user-role" style="font-weight: bold; color: green;"></span></h3>
+            <button onclick="logout()" style="background: #dc3545;">Logout</button>
+            <button id="btn-report" class="hidden" onclick="triggerReports()" style="background: #ffc107; color: black; margin-left: 10px;">Invia Report Ora (Telegram/Email)</button>
+        </div>
+
+        <div class="card">
+            <h2>Dati di Produzione Recenti</h2>
+            <button onclick="loadData()">Aggiorna Dati</button>
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>ID Batch</th>
+                        <th>Data Ricezione</th>
+                        <th>Payload Dettagliato</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let role = localStorage.getItem('role');
+
+        if(token) showDashboard();
+
+        async function login() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            
+            if(res.ok) {
+                const data = await res.json();
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('role', data.role);
+                token = data.token;
+                role = data.role;
+                showDashboard();
+            } else {
+                alert('Credenziali non valide');
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('main-section').classList.remove('hidden');
+            document.getElementById('user-role').innerText = role.toUpperCase();
+
+            // Mostra pulsante di invio report solo ad Amministratore e Operatore
+            if(role === 'amministratore' || role === 'operatore') {
+                document.getElementById('btn-report').classList.remove('hidden');
+            }
+            loadData();
+        }
+
+        async function loadData() {
+            const res = await fetch('/api/production-data', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if(res.ok) {
+                const data = await res.json();
+                const tbody = document.querySelector('#data-table tbody');
+                tbody.innerHTML = '';
+                data.forEach(row => {
+                    tbody.innerHTML += `<tr>
+                        <td>${row.id}</td>
+                        <td>${new Date(row.created_at).toLocaleString()}</td>
+                        <td><code>${JSON.stringify(row.data)}</code></td>
+                    </tr>`;
+                });
+            }
+        }
+
+        async function triggerReports() {
+            const res = await fetch('/api/reports/trigger', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            alert(data.message);
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+    </script>
+</body>
+</html>

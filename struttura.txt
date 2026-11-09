@@ -1,0 +1,12 @@
+smart-laundry/
+├── config/
+│   └── db.js
+├── middleware/
+│   └── auth.js
+├── public/
+│   └── index.html
+├── server.js
+├── package.json
+├── .env
+├── Dockerfile
+└── docker-compose.yml
