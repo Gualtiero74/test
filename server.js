@@ -33,7 +33,7 @@ async function fetchAndSaveProductionData() {
     const lastId = config[0] ? parseInt(config[0].cfg_value) : 0;
 
     // 2. Richiesta API passando l'ultimo ID (es. come parametro di query, adegua se l'endpoint usa un formato diverso)
-    const apiUrl = `http://gateways.smartlaundry.kannegiessser.cloud/api/gateways(v1/production-data/batches?afterId=${lastId}`;
+    const apiUrl = `http://gateways.smartlaundry.kannegiesser.cloud/api/gateways(v1/production-data/batches?afterId=${lastId}`;
     const response = await axios.get(apiUrl);
     const batches = response.data; // Assumiamo sia un array di oggetti batch
 
@@ -121,6 +121,7 @@ app.post('/api/auth/register', authorize('amministratore'), async (req, res) => 
 // Login per tutti
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
+  console.log({username, password })
   const [users] = await pool.query("SELECT * FROM users WHERE username = ?", [username]);
   if (users.length === 0) return res.status(401).json({ message: 'Credenziali errate' });
 

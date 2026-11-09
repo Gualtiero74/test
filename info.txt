@@ -1,2 +1,10 @@
-passo 1
-docker-compose up -build -d
+passo 1 - creiamo l'immagine personalizzata
+
+sudo docker build -f dockerfile -t persnode .
+
+avviamo il compose
+
+sudo docker compose up
+
+
+
